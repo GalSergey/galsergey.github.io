@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Block Assembler by GalSergey</title>
+    <link rel="icon" href="https://styles.redditmedia.com/t5_6aviyc/styles/profileIcon_msenduashsw81.jpg"
+        type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 100vh;
+        }
+
+        #myInput {
+            font-family: 'Courier New', monospace;
+            height: 90vh;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            resize: none;
+            position: sticky;
+            top: 0;
+            background-color: #444;
+            border-bottom: 1px solid #000;
+            font-size: 16px;
+            padding: 10px;
+            color: #fff;
+        }
+
+        #Output {
+            font-family: 'Courier New', monospace;
+            height: 40vh;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            resize: none;
+            position: sticky;
+            top: 0;
+            background-color: #444;
+            border-bottom: 1px solid #000;
+            font-size: 16px;
+            padding: 10px;
+            color: #fff;
+        }
+
+        #inputFields {
+            display: flex;
+            margin: 10px;
+            align-items: center;
+        }
+
+        #archiveNameInput,
+        #archiveName,
+        #description,
+        #descriptionInput,
+        #dataFormatVersion,
+        #dataFormatVersionInput {
+            margin-right: 10px;
+            color: #eee;
+        }
+
+        #myInput input,
+        #spawn_egg_type,
+        #archiveName input,
+        #description input,
+        #packFormatSelect select,
+        #dataFormatVersion input {
+            width: 260px;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #555;
+            color: #fff;
+            border: none;
+        }
+
+        #archiveName label,
+        #description label,
+        #dataFormatVersion label {
+            font-weight: bold;
+        }
+
+        button {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease;
+            padding: 10px;
+            margin-left: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        button:hover {
+            background-color: #39813c;
+        }
+
+        #footer {
+            bottom: 0;
+            align-self: stretch;
+            background-color: #444;
+            color: #eee;
+            text-align: center;
+            padding: 0px;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        #footer a {
+            color: #61dafb;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: 2px solid #000;
+        }
+
+        #resetButton {
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-left: 5px;
+        }
+
+        #Settings {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 5px;
+        }
+
+        #resetButton:hover {
+            background-color: #b40000;
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            font-family: 'Courier New', monospace;
+            content: attr(target-ver);
+            white-space: nowrap;
+            pointer-events: none;
+            position: absolute;
+            top: 60%;
+            right: 38px;
+            transform: translateY(-75%);
+            font-size: 12px;
+            color: #aaa;
+            direction: ltr;
+        }
+
+        .share-button {
+            background-color: #3498db;
+        }
+
+        .share-button:hover {
+            background-color: #236694;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+        }
+
+        input[id="copyLink"] {
+            position: absolute;
+            margin-top: 11.25px;
+            margin-left: 70px;
+            display: none;
+            animation: fade-out 1s;
+            animation: fade-in 1s;
+        }
+
+        @keyframes fade-in {
+            from {
+                transform: translate(-50%) scale(0%, 100%);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fade-out {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(-50%) scale(0%, 100%);
+            }
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+        }
+
+        .extra {
+            display: none;
+            align-items: center;
+        }
+
+        .manual-input {
+            display: none;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .icon,
+        .skin,
+        .glasses {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            transition: transform 0.3s ease-out;
+        }
+
+        .skin,
+        .glasses {
+            position: absolute;
+        }
+
+        .icon:hover .glasses {
+            transform: translateY(15px);
+        }
+
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-links a {
+            text-decoration: none;
+            color: #d00000;
+            font-weight: bold;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="links">
+            <div class="icon">
+                <a href="/">
+                    <img src="/assets/skin.png" class="skin">
+                    <img src="/assets/glasses.png" class="glasses">
+                </a>
+            </div>
+            <nav class="header-links">
+                <a href="/">Datapack Assembler</a>
+                <a style="color: white">Command Block Assembler</a>
+                <a href="/item">Item Components Viewer</a>
+            </nav>
+        </div>
+        <div class="library">
+            <div id="exampleSelector">
+                <label for="authorSelect">Author:</label>
+                <select id="authorSelect"
+                    style="display: inline-block; width: 128px; height: 31px; background: rgb(85, 85, 85); color: white; border-color: rgb(85, 85, 85); margin-right: 4px;"></select>
+                <label for="exampleSelect">Select Example:</label>
+                <select id="exampleSelect"
+                    style="display: inline-block; width: 260px; height: 31px; background: rgb(85, 85, 85); color: white; border-color: rgb(85, 85, 85); margin-right: 4px;"></select>
+                <button class="load-example" id="openExampleButton" onclick="loadExample(event)">Load Example</button>
+            </div>
+        </div>
+    </header>
+    <textarea spellcheck="false" id="myInput" name="myInput" placeholder="# Setup
+say Hello World
+
+# Command blocks
+give @a hugs"></textarea>
+    <textarea readonly id="Output" name="Output" placeholder="Output"></textarea>
+    <div id="Settings">
+        <div class="extra">
+            <label for="spawn_egg" title="Thanks to WitherGod360 for the idea!">TEST</label>
+        </div>
+        <div class="container">
+            <div>
+                <label for="spawn_egg" title="Thanks to WitherGod360 for the idea!">Make Spawn Egg:</label>
+                <input type="checkbox" id="spawn_egg" title="Thanks to WitherGod360 for the idea!">
+                <input style="width: 220px;" list="spawn_egg_list" id="spawn_egg_type" placeholder="bat_spawn_egg">
+                <datalist id="spawn_egg_list"></datalist>
+                <label for="facing">Facing:</label>
+                <select id="facing"
+                    style="display: inline-block; height: 31px; background: rgb(85, 85, 85); color: white; border-color: rgb(85, 85, 85); margin-right: 4px;">
+                    <option value="" selected>North (-Z)</option>
+                    <option value="facing=south">South (+Z)</option>
+                    <option value="facing=west">West (-X)</option>
+                    <option value="facing=east">East (+X)</option>
+                </select>
+                <button onclick="createOneCommand(event)">Get One Command</button>
+                <button id="resetButton" onclick="resetValues()">Reset to Default</button>
+                <input type="text" id="copyLink" class="copyLink" value="http://far.ddns.me/?share=kiycXOKPwg" size="35"
+                    readonly>
+                <button class="share-button" onclick="sendShare(event)">Share</button>
+            </div>
+        </div>
+    </div>
+    <div id="footer">
+        <p id="patreon"><a href="https://www.patreon.com/GalSergey" target="_blank">Patreon</a></p>
+        <p>Please report any bugs on the site to<a href="https://www.reddit.com/user/GalSergey"
+                target="_blank">GalSergey</a>|<a href="https://modrinth.com/user/GalSergey" target="_blank">My
+                datapacks</a></p>
+    </div>
+    <script>
+
+        const patreons = ['Someone', 'NatNATTO', 'Andrew', 'CadeMade'];
+        const patreonsFormat = `${patreons.slice(0, -1).join(', ')} and ${patreons[patreons.length - 1]}`;
+        console.log(`Thank you to ${patreonsFormat} for the support on https://patreon.com/GalSergey`);
+        const ThanksPatreons = document.getElementById('patreon');
+        ThanksPatreons.innerHTML = `Thank you ${patreonsFormat} for your support on<a href="https://www.patreon.com/GalSergey" target="_blank">Patreon</a>`;
+
+        function getHash(hash) {
+            let hashes;
+            try {
+                hashes = JSON.parse(localStorage['hashes']);
+            } catch {
+                localStorage['hashes'] = '{}';
+                hashes = {};
+            }
+            return hashes[hash];
+        }
+
+        function setHash(hash, link) {
+            let hashes;
+            try {
+                hashes = JSON.parse(localStorage['hashes']);
+            } catch {
+                localStorage['hashes'] = '{}';
+                hashes = {};
+            }
+            hashes[hash] = link;
+            localStorage['hashes'] = JSON.stringify(hashes);
+        }
+
+        var examplesByCategory = {
+            'Empty': ['Empty']
+        };
+        var spawn_eggs;
+
+        async function get_spawn_eggs() {
+            const response = await fetch('https://raw.githubusercontent.com/misode/mcmeta/summary/registries/data.min.json');
+            const data = await response.json();
+            spawn_eggs = data.item.filter((item) => /spawn_egg/.test(item));
+        }
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            if (!spawn_eggs) await get_spawn_eggs();
+            const urlParams = new URLSearchParams(window.location.search);
+            const categoryFromURL = urlParams.get('category');
+            const exampleFromURL = urlParams.get('example');
+            const shareFromURL = urlParams.get('share');
+            const spawn_egg_list = document.getElementById('spawn_egg_list');
+
+            spawn_eggs.forEach(spawn_egg => {
+                let option = document.createElement('option');
+                option.value = spawn_egg;
+                spawn_egg_list.appendChild(option);
+            });
+
+            if (categoryFromURL && exampleFromURL) {
+                loadExample(event = event.NONE, categoryFromURL.replace(/_/g, ' '), exampleFromURL.replace(/_/g, ' '));
+            } else if (shareFromURL) {
+                loadShare(shareFromURL);
+            };
+            const newUrl = window.location.href.split('?')[0];
+            window.history.pushState({}, document.title, newUrl);
+            const categories = Object.keys(examplesByCategory);
+            const authorSelect = document.getElementById('authorSelect');
+            authorSelect.innerHTML = '';
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.text = category;
+                authorSelect.add(option);
+            });
+            authorSelect.addEventListener('change', update_Examples);
+            document.getElementById("copyLink").addEventListener("click", selectText);
+        });
+
+        function createOneCommand(event) {
+            const commands = document.getElementById("myInput").value.split('\n').filter(line => {
+                // Удаляет пустые строки и комментарии
+                return !(/^(#(?!.*(?:setup|command block|in chat|controller|manual)).*)$/i.test(line));
+            })
+            const facing = document.getElementById("facing").value;
+            const command_blocks = [];
+            const spawn_egg = document.getElementById("spawn_egg").checked;
+            const spawn_egg_type = document.getElementById("spawn_egg_type").value || document.getElementById("spawn_egg_type").placeholder;
+
+            let offset = [0, -2, 0];
+            let type = "just_command";
+            let temp_type, temp_activity, temp_condition;
+            let condition = '';
+            let activity = '1';
+            let first_offset = false;
+            switch (facing) {
+                case '':
+                    offset[0]--;
+                    break;
+                case 'facing=south':
+                    offset[0]++;
+                    break;
+                case 'facing=west':
+                    offset[2]++;
+                    break;
+                case 'facing=east':
+                    offset[2]--;
+                    break;
+            }
+            commands.reduce((acc, line, i, arr) => {
+                line = line.trim();
+                if (line.startsWith('#')) return 0;
+                type = temp_type ? temp_type : type == "just_command" ? "just_command" : "chain_command_block";
+                activity = temp_activity ? temp_activity : '1';
+                condition = temp_condition ? temp_condition : '';
+                temp_type = undefined;
+                temp_activity = undefined;
+                temp_condition = undefined;
+                if (!line) {
+                    acc++;
+                    if (/^# (?:setup|command block|in chat|controller|manual)/i.test(arr[i + 1]) && type !== 'just_command') {
+                        switch (facing) {
+                            case '':
+                                offset[0] = offset[0] - acc;
+                                break;
+                            case 'facing=south':
+                                offset[0] = offset[0] + acc;
+                                break;
+                            case 'facing=west':
+                                offset[2] = offset[2] + acc;
+                                break;
+                            case 'facing=east':
+                                offset[2] = offset[2] - acc;
+                                break;
+                        }
+                    }
+                    return acc;
+                } else if (/^# (in chat)/i.test(arr[i - 1])) {
+                    if (type !== 'just_command')
+                        type = 'just_command';
+                } else if (/^# (setup)/i.test(arr[i - 1])) {
+                    type = 'command_block';
+                    condition = '';
+                    activity = '1';
+                    if (first_offset)
+                        switch (facing) {
+                            case '':
+                                offset[0]--;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=south':
+                                offset[0]++;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=west':
+                                offset[2]++;
+                                offset[0] = 0;
+                                break;
+                            case 'facing=east':
+                                offset[2]--;
+                                offset[0] = 0;
+                                break;
+                        }
+                    first_offset = true;
+                } else if (/^# (manual)/i.test(arr[i - 1])) {
+                    type = 'command_block';
+                    condition = '';
+                    activity = '0';
+                    if (first_offset)
+                        switch (facing) {
+                            case '':
+                                offset[0]--;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=south':
+                                offset[0]++;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=west':
+                                offset[2]++;
+                                offset[0] = 0;
+                                break;
+                            case 'facing=east':
+                                offset[2]--;
+                                offset[0] = 0;
+                                break;
+                        }
+                    first_offset = true;
+                } else if (/^# (command block)|(controller)/i.test(arr[i - 1])) {
+                    type = 'repeating_command_block';
+                    condition = '';
+                    activity = '1';
+                    if (first_offset)
+                        switch (facing) {
+                            case '':
+                                offset[0]--;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=south':
+                                offset[0]++;
+                                offset[2] = 0;
+                                break;
+                            case 'facing=west':
+                                offset[2]++;
+                                offset[0] = 0;
+                                break;
+                            case 'facing=east':
+                                offset[2]--;
+                                offset[0] = 0;
+                                break;
+                        }
+                    first_offset = true;
+                } else if (type !== "just_command")
+                    switch (facing) {
+                        case '':
+                            offset[2]--;
+                            break;
+                        case 'facing=south':
+                            offset[2]++;
+                            break;
+                        case 'facing=west':
+                            offset[0]--;
+                            break;
+                        case 'facing=east':
+                            offset[0]++;
+                            break;
+                    }
+                line = line.replace(/^\//, '');
+                let settings, redstone, sign, pos_x, pos_z, misc_facing;
+                if (/^(\[.*?\])+(.*)$/.test(line)) {
+                    let options = line.split(' ')[0].match(/\[([^\]]+)\]/g).map(option => option.replace(/[\[\]]/g, ''));
+                    line = line.match(/^(\[.*?\])+(.*)$/)[2].trim();
+                    settings, sign = false;
+                    options.forEach((option) => {
+                        if (/^[RCI][UC][AN]$/i.test(option)) {
+                            settings = option;
+                            type = settings[0];
+                            condition = settings[1];
+                            activity = settings[2];
+                        } else if (/(button)|(lever)/i.test(option)) {
+                            activity = '0';
+                            switch (facing) {
+                                case '':
+                                    misc_facing = 'facing=south';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                                case 'facing=south':
+                                    misc_facing = '';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                                case 'facing=west':
+                                    misc_facing = 'facing=east';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                                case 'facing=east':
+                                    misc_facing = 'facing=west';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                            }
+                            command_blocks.push({ type: 'redstone', command: `~${pos_x} ~-1 ~${pos_z} ${option === 'button' ? 'stone_button' : option}[face=floor,${misc_facing}]` });
+                        } else if (/(sign)/i.test(option)) {
+                            switch (facing) {
+                                case '':
+                                    misc_facing = 'facing=south';
+                                    pos_x = offset[0];
+                                    pos_z = ++offset[2];
+                                    break;
+                                case 'facing=south':
+                                    misc_facing = '';
+                                    pos_x = offset[0];
+                                    pos_z = --offset[2];
+                                    break;
+                                case 'facing=west':
+                                    misc_facing = 'facing=east';
+                                    pos_x = ++offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                                case 'facing=east':
+                                    misc_facing = 'facing=west';
+                                    pos_x = --offset[0];
+                                    pos_z = offset[2];
+                                    break;
+                            }
+                            temp_type = type;
+                            temp_condition = condition;
+                            temp_activity = activity;
+                            type = 'sign';
+                            let sign_lines = line.split('|');
+                            sign_lines.forEach((sign_line, i, arr) => {
+                                try {
+                                    sign_lines[i] = JSON.pasrse(sign_line.trim())
+                                } catch {
+                                    sign_lines[i] = `'"${sign_line.trim()}"'`
+                                }
+                                while (sign_lines.length < 4)
+                                    sign_lines.push(`'""'`)
+                            })
+                            line = `~${pos_x} ~-2 ~${pos_z} ${option === 'sign' ? 'oak_wall_sign' : option.replace('_', '_wall_')}[${misc_facing}]{front_text:{messages:[${sign_lines}]}}`;
+                            delete arr[i - 1];
+                        } else if (/(wool)/i.test(option)) {
+                            activity = '0';
+                            switch (facing) {
+                                case '':
+                                    misc_facing = 'facing=south';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2]--;
+                                    break;
+                                case 'facing=south':
+                                    misc_facing = '';
+                                    pos_x = offset[0];
+                                    pos_z = offset[2]++;
+                                    break;
+                                case 'facing=west':
+                                    misc_facing = 'facing=east';
+                                    pos_x = offset[0]--;
+                                    pos_z = offset[2];
+                                    break;
+                                case 'facing=east':
+                                    misc_facing = 'facing=west';
+                                    pos_x = offset[0]++;
+                                    pos_z = offset[2];
+                                    break;
+                            }
+                            command_blocks.push({ type: 'redstone', command: `~${pos_x} ~-3 ~${pos_z} command_block{Command:\\"setblock ~ ~1 ~ ${option === 'wool' ? 'white_wool' : option}\\"}` });
+                        }
+                    })
+                    if (settings) {
+                        switch (type.toUpperCase()) {
+                            case 'R':
+                                type = 'repeating_command_block';
+                                break;
+                            case 'C':
+                                type = 'chain_command_block';
+                                break;
+                            case 'I':
+                                type = 'command_block';
+                                break;
+                            default:
+                                alert(`Unknown type character: ${type} in ${settings}.`);
+                                throw new Error(`Unknown type character: ${type}`);
+                        }
+                        switch (condition.toUpperCase()) {
+                            case 'U':
+                                condition = '';
+                                break;
+                            case 'C':
+                                condition = 'conditional=true';
+                                break;
+                            default:
+                                alert(`Unknown condition character: ${condition} in ${settings}.`);
+                                throw new Error(`Unknown condition character: ${condition}`);
+                        }
+                        switch (activity.toUpperCase()) {
+                            case 'A':
+                                activity = '1';
+                                break;
+                            case 'N':
+                                activity = '0';
+                                break;
+                            default:
+                                alert(`Unknown activity character: ${activity} in ${settings}.`);
+                                throw new Error(`Unknown activity character: ${activity}`);
+                        }
+                    }
+                }
+                command = line.replace(/@(.)/, (match, nextChar) => nextChar === 's' ? '@p' : match);
+                command_blocks.push({ type: type, command: command.replace(/\\/g, '\\\\').replace(/"/g, '\\\"'), condition: condition, activity: activity, offset: [...offset], redstone: { x: pos_x, z: pos_z, type: redstone, redstone_facing: misc_facing } });
+                return 0;
+            }, 0);
+            let minecarts = [];
+            let length = 128 + (131 + spawn_egg_type.length) * spawn_egg;
+
+            command_blocks.push({ command: `fill ~ ~ ~ ~ ~-3 ~ air`, type: "command_block", condition: '', activity: "1", offset: [0, 1, 0] });
+            command_blocks.push({ command: "execute align xyz run kill @e[type=command_block_minecart,dy=0]", type: "just_command", offset: [0, 0, 0] });
+            command_blocks.forEach((cb) => {
+                if (cb.type === "just_command")
+                    minecarts.push(`{id:command_block_minecart,Command:"${cb.command}"}`);
+                else if (cb.type === "redstone") {
+                    minecarts.push(`{id:command_block_minecart,Command:"setblock ${cb.command}"}`);
+                } else if (cb.type === "sign") {
+                    minecarts.push(`{id:command_block_minecart,Command:"setblock ${cb.command}"}`);
+                } else if (cb.type === "wool") {
+                    minecarts.push(`{id:command_block_minecart,Command:"setblock ${cb.command}"}`);
+                } else
+                    minecarts.push(`{id:command_block_minecart,Command:"setblock ~${cb.offset[0] !== 0 ? cb.offset[0] : ''} ~${cb.offset[1] !== 0 ? cb.offset[1] : ''} ~${cb.offset[2] !== 0 ? cb.offset[2] : ''} ${cb.type}${facing || cb.condition ? '[' : ''}${facing}${facing && cb.condition ? ',' : ''}${cb.condition}${facing || cb.condition ? ']' : ''}{Command:\\"${cb.command.replace(/\\/g, '\\\\').replace(/"/g, '\\\"')}\\"${cb.activity === '1' ? ',auto:1' : ''}}"}`);
+                length += minecarts[minecarts.length - 1].length;
+            })
+            if (length + 335 + patreonsFormat.length < 32500 && !event.shiftKey && !(spawn_egg && minecarts.length < 5)) {
+                minecarts.splice(0, 0, `{id:command_block_minecart,Command:'tellraw @p [{"text":"Thanks for using Command Block Assembler! \\\\nAlso thanks to ${patreonsFormat} for their support on ","color":"green"},{"text":"Patreon","color":"gold","clickEvent":{"action":"open_url","value":"https://patreon.com/GalSergey"},"hoverEvent":{"action":"show_text","value":"Go to Patreon"}},"."]'}`)
+            }
+            let output = `summon falling_block ~ ~1 ~ {BlockState:{Name:redstone_block},Passengers:[{id:falling_block,BlockState:{Name:activator_rail}},${minecarts}]}`;
+            if (spawn_egg) {
+                output = `give @p ${spawn_egg_type}[entity_data={id:"minecraft:falling_block",DropItem:0,BlockState:{Name:"minecraft:command_block"},TileEntityData:{Command:"${output.replace(/\\/g, '\\\\').replace(/"/g, '\\\"')}",auto:1}}]`
+            }
+            if (output.length > 32500)
+                alert('The generated command is too long to be used in a command block :(')
+            document.getElementById("Output").value = output;
+
+        }
+
+        function setStorage(key, value) {
+            let localData = JSON.parse(localStorage.getItem('command_blocks')) || {};
+            localData[key] = value;
+            localStorage.setItem("command_blocks", JSON.stringify(localData));
+        }
+
+        function getStorage(key) {
+            let localData = JSON.parse(localStorage.getItem('command_blocks')) || {};
+            return localData[key] || null;
+        }
+
+        const textarea = document.getElementById('myInput');
+        const inputFields = document.querySelectorAll('input, textarea');
+        inputFields.forEach((inputField) => {
+            inputField.addEventListener('input', handleInputChange);
+            const storedValue = getStorage(inputField.id);
+            if (storedValue !== null) {
+                inputField.value = storedValue;
+            }
+        });
+
+        const storedTextareaValue = getStorage('myInput');
+        if (storedTextareaValue !== null) {
+            textarea.value = storedTextareaValue;
+        }
+
+        function resetValues() {
+            if (confirm("Are you sure you want to reset to default values?")) {
+                var copyLink = document.querySelector(".copyLink");
+                copyLink.style.display = 'none';
+                const inputFields = document.querySelectorAll('input, textarea, select');
+                inputFields.forEach((inputField) => {
+                    if (/exampleSelect|facing|authorSelect/.test(inputField.id)) return;
+                    inputField.value = inputField.defaultValue;
+                    localStorage.setItem("command_blocks", '{}');
+                    setStorage(inputField.id || inputField.name, inputField.defaultValue);
+                });
+            }
+        }
+
+        function handleInputChange(event) {
+            document.querySelector(".copyLink").style.display = "none"
+            const inputField = event.target;
+            const inputId = inputField.id || inputField.name;
+            const inputValue = inputField.value;
+            setStorage(inputId, inputValue);
+        }
+
+        function selectText(event) {
+            var copyLink = document.getElementById("copyLink");
+            var link = copyLink.value.replace(/ /g, '_')
+            if (event.shiftKey) {
+                link = `You can use [Command Block Assembler](${link}) to get One Command Creation.`
+            } else if (event.ctrlKey) {
+                const text = document.getElementById("myInput").value.split('\n').join('\n    ');
+                link = `\n\n    ${text}\n\nYou can use [Command Block Assembler](${link}) to get One Command Creation.`
+            }
+
+            const clipboard = new ClipboardJS('.copyLink', {
+                text: function () {
+                    return link;
+                }
+            });
+            setTimeout(function () {
+                copyLink.select();
+            }, 100);
+        }
+
+        function update_Examples() {
+            const selectedCategory = document.getElementById('authorSelect').value;
+            const examples = examplesByCategory[selectedCategory];
+
+            const exampleSelect = document.getElementById('exampleSelect');
+            exampleSelect.innerHTML = '';
+            const recent = Date.now() - 31 * 24 * 60 * 60 * 1000;
+
+            Object.keys(examples).forEach((example) => {
+                const option = document.createElement('option');
+                option.text = `${examples[example].name} ${examples[example].date > recent ? '[NEW]' : ''}`;
+                option.value = example;
+                exampleSelect.add(option);
+            })
+        }
+
+        async function loadExample(event, category, example) {
+            example = document.getElementById('exampleSelect').value.replace(/ /g, '_');
+            const shareLink = `${window.location.origin}/cba/?share=${example}`;
+            if (event.shiftKey) {
+                const category = document.getElementById('authorSelect').value.replace(/ /g, '_');
+
+                const clipboard = new ClipboardJS('.load-example', {
+                    text: function () {
+                        return shareLink;
+                    }
+                });
+            } else {
+                if (document.getElementById("myInput").value) {
+                    var isConfirmed = confirm("You are sure you want to open an example? The entered data will be replaced.");
+                    if (!isConfirmed) return false;
+                };
+                window.location.href = shareLink;
+            };
+            inputFields.forEach((inputField) => {
+                setStorage(inputField.id, inputField.value);
+            })
+        }
+
+        function update_authorSelect() {
+            const categories = Object.keys(examplesByCategory).reverse();
+            const authorSelect = document.getElementById('authorSelect');
+
+            authorSelect.innerHTML = '';
+
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.text = category;
+                authorSelect.add(option);
+            })
+        }
+
+        fetch(`/get/library`)
+            .then(response => response.json())
+            .then(data => {
+                examplesByCategory = data.command_blocks;
+                update_authorSelect();
+                update_Examples();
+            })
+            .catch(error => console.error('Error loading example:', error));
+
+        var awaitLink = false;
+        async function sendShare(event) {
+            var shareButton = document.querySelector('.share-button');
+            var copyLink = document.querySelector(".copyLink");
+
+            if (awaitLink) return;
+            var text = document.getElementById("myInput").value;
+            if (!text) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            awaitLink = true;
+            shareButton.style.cursor = "wait";
+
+            const hash = CryptoJS.SHA1(text.replace(/\r/g, '')).toString();
+            if (!getHash(hash)) {
+                await fetch(`/cba/share/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text }),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        setHash(hash, `${window.location.origin}/cba/?share=${data.share}`);
+                    })
+                    .catch(error => {
+                        console.error('Error creating paste:', error);
+                    });
+            }
+            copyLink.value = getHash(hash);
+            copyLink.style.display = "initial";
+            copyLink.addEventListener("animationstart", function (e) {
+                // console.log("animationstart", e)
+                if (e.animationName === "fade-in") {
+                    e.target.classList.add("did-fade-in");
+                }
+            })
+            shareButton.style.cursor = "pointer";
+            awaitLink = false;
+        }
+
+
+        function loadShare(share) {
+            fetch(`/cba/share/get`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fileID: share,
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("myInput").value = data.content;
+                    handleInputChange({ target: document.getElementById('myInput') });
+                    inputFields.forEach((inputField) => {
+                        setStorage(inputField.id, inputField.value);
+                    });
+                    const hash = CryptoJS.SHA1(data.content.replace(/\r/g, '')).toString();
+                    setHash(hash, `${window.location.origin}/cba/?share=${share}`);
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке пасты: ', error);
+                });
+        }
+
+        function log(...msg) {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}]`, ...msg)
+        }
+    </script>
+</body>
+
+</html>

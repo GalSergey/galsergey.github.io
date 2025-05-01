@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Components Viewer by GalSergey</title>
+    <link rel="icon" href="https://styles.redditmedia.com/t5_6aviyc/styles/profileIcon_msenduashsw81.jpg"
+        type="image/png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.2.2/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.8/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #333;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 100vh;
+        }
+
+        #input_item,
+        #versions {
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            width: 400px;
+            resize: none;
+            position: sticky;
+            top: 0;
+            background-color: #444;
+            border-bottom: 1px solid #000;
+            font-size: 16px;
+            padding: 10px;
+            color: #fff;
+        }
+
+        #JSON,
+        #SNBT,
+        #Give {
+            font-family: 'Courier New', monospace;
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            resize: none;
+            position: sticky;
+            top: 0;
+            background-color: #444;
+            border-bottom: 1px solid #000;
+            font-size: 16px;
+            padding: 10px;
+            color: #fff;
+        }
+
+        #JSON {
+            height: 80vh;
+        }
+
+        #SNBT,
+        #Give {
+            height: 20vh;
+        }
+
+        #inputFields {
+            display: flex;
+            margin: 10px;
+            align-items: center;
+        }
+
+        #archiveNameInput,
+        #archiveName,
+        #description,
+        #descriptionInput,
+        #dataFormatVersion,
+        #dataFormatVersionInput {
+            margin-right: 10px;
+            color: #eee;
+        }
+
+        #input_item input,
+        #archiveName input,
+        #description input,
+        #packFormatSelect select,
+        #dataFormatVersion input {
+            width: 260px;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #555;
+            color: #fff;
+            border: none;
+        }
+
+        #archiveName label,
+        #description label,
+        #dataFormatVersion label {
+            font-weight: bold;
+        }
+
+        button {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease;
+            padding: 10px;
+            margin-left: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        button:hover {
+            background-color: #39813c;
+        }
+
+        #footer,
+        #header {
+            bottom: 0;
+            align-self: stretch;
+            background-color: #444;
+            color: #eee;
+            text-align: center;
+            padding: 0px;
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        #footer a,
+        #header a {
+            color: #61dafb;
+            text-decoration: none;
+            margin: 0 5px;
+        }
+
+        #header {
+            text-align: left;
+            font-size: 16px;
+            margin-bottom: 2px;
+            margin-top: 2px;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: 2px solid #000;
+        }
+
+        #resetButton {
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 5px;
+            margin-left: 5px;
+        }
+
+        #resetButton:hover {
+            background-color: #b40000;
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            font-family: 'Courier New', monospace;
+            content: attr(target-ver);
+            white-space: nowrap;
+            pointer-events: none;
+            position: absolute;
+            top: 60%;
+            right: 38px;
+            transform: translateY(-75%);
+            font-size: 12px;
+            color: #aaa;
+            direction: ltr;
+        }
+
+        .share-button {
+            background-color: #3498db;
+        }
+
+        .share-button:hover {
+            background-color: #236694;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+        }
+
+        input[id="copyLink"] {
+            position: absolute;
+            margin-top: 11.25px;
+            margin-left: 70px;
+            display: none;
+            animation: fade-out 1s;
+            animation: fade-in 1s;
+        }
+
+        @keyframes fade-in {
+            from {
+                transform: translate(-50%) scale(0%, 100%);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fade-out {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                transform: translate(-50%) scale(0%, 100%);
+            }
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+        }
+
+        .extra {
+            display: none;
+            align-items: center;
+        }
+
+        .manual-input {
+            display: none;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .icon,
+        .skin,
+        .glasses {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            transition: transform 0.3s ease-out;
+        }
+
+        .skin,
+        .glasses {
+            position: absolute;
+        }
+
+        .icon.hover .glasses,
+        .icon:hover .glasses {
+            transform: translateY(15px);
+        }
+
+        .header-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .header-links a {
+            text-decoration: none;
+            color: #d00000;
+            font-weight: bold;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="links">
+            <div class="icon">
+                <a href="/">
+                    <img src="/assets/skin.png" class="skin">
+                    <img src="/assets/glasses.png" class="glasses">
+                </a>
+            </div>
+            <nav class="header-links">
+                <a href="/">Datapack Assembler</a>
+                <a href="/cba">Command Block Assembler</a>
+                <a style="color: white">Item Components Viewer</a>
+            </nav>
+        </div>
+    </header>
+    <div id="inputs">
+        <button id="resetButton" onclick="reset()">✕</button>
+        <datalist id="items_list"></datalist>
+        <input list="items_list" id="input_item" placeholder="Item ID">
+        <select id="versions"></select>
+        <label for="no_namespace">Remove "minecraft:"</label>
+        <input type="checkbox" id="no_namespace">
+        <label for="show_snapshots">Show snapshots:</label>
+        <input type="checkbox" id="show_snapshots">
+    </div>
+    <textarea id="JSON" placeholder="Components in JSON"></textarea>
+    <textarea id="SNBT" placeholder="Components in SNBT"></textarea>
+    <textarea id="Give" placeholder="Give command"></textarea>
+    <div id="footer">
+        <p id="patreon"><a href="https://www.patreon.com/GalSergey" target="_blank">Patreon</a></p>
+        <p>Please report any bugs on the site to<a href="https://www.reddit.com/user/GalSergey"
+                target="_blank">GalSergey</a>|<a href="https://modrinth.com/user/GalSergey" target="_blank">My
+                datapacks</a></p>
+    </div>
+    <script>
+
+        const patreons = ['Someone', 'NatNATTO', 'Andrew', 'CadeMade'];
+        const patreonsFormat = `${patreons.slice(0, -1).join(', ')} and ${patreons[patreons.length - 1]}`;
+        console.log(`Thank you to ${patreonsFormat} for the support on https://patreon.com/GalSergey`);
+        const ThanksPatreons = document.getElementById('patreon');
+        ThanksPatreons.innerHTML = `Thank you ${patreonsFormat} for your support on<a href="https://www.patreon.com/GalSergey" target="_blank">Patreon</a>`;
+
+        let items;
+        let select_version = document.getElementById('versions').value || document.getElementById('versions').placeholder;
+        const urlParams = new URL(window.location.href);
+        const item_map = [];
+        const versions = [];
+
+        window.onload = function () {
+            const icon = document.querySelector('.icon');
+            const rect = icon.getBoundingClientRect();
+            const inIcon = rect.left <= event.clientX && event.clientX <= rect.right &&
+                rect.top <= event.clientY && event.clientY <= rect.bottom;
+
+            if (inIcon) {
+                icon.classList.add('hover');
+            }
+        };
+
+        async function get_versions() {
+            const response = await fetch('https://raw.githubusercontent.com/misode/mcmeta/summary/versions/data.min.json');
+            const data = await response.json();
+            const min_release = new Date("2024-02-28T12:38:12+00:00");
+            data.forEach(version => {
+                if (new Date(version.release_time) < min_release) return;
+                versions[version.id] = version.type;
+            });
+            update_versions_list();
+        }
+
+        function update_versions_list() {
+            document.getElementById('versions').innerHTML = '';
+            const show_snapshots = document.getElementById('show_snapshots').checked;
+            const last_release = Object.keys(versions).find(key => versions[key] === 'release');
+            const url_version = urlParams.searchParams.get('ver');
+            Object.keys(versions).forEach(version => {
+                if (!show_snapshots && versions[version] !== 'release' && version !== url_version) return;
+                let option = document.createElement('option');
+                option.value = version;
+                option.text = version;
+                document.getElementById('versions').appendChild(option);
+            });
+            document.getElementById('versions').value = url_version || last_release;
+        }
+
+        async function update_items_list() {
+            if (!item_map[select_version]) await versions_update();
+            const items_list = document.getElementById('items_list');
+            items_list.innerHTML = '';
+            items = Object.keys(item_map[select_version]);
+            items.forEach(id => {
+                let option = document.createElement('option');
+                option.value = id;
+                items_list.appendChild(option);
+            });
+            document.getElementById('input_item').value = urlParams.searchParams.get('id');
+        }
+
+        async function versions_update() {
+            const input_versions = document.getElementById('versions');
+            select_version = input_versions.value || input_versions.placeholder;
+            if (!versions[select_version]) {
+                input_versions.style.borderColor = 'red';
+                document.getElementById('items_list').innerHTML = '';
+                document.getElementById('JSON').value = ''
+                document.getElementById('SNBT').value = ''
+                document.getElementById('Give').value = ''
+                return;
+            }
+            else
+                input_versions.style.borderColor = '';
+            if (!item_map[select_version]) {
+                const response = await fetch(`https://raw.githubusercontent.com/misode/mcmeta/${select_version}-summary/item_components/data.min.json`);
+                let data = await response.json();
+                if (!Array.isArray(data[Object.keys(data)[0]]))
+                    item_map[select_version] = data;
+                else {
+                    Object.keys(data).forEach((item) => {
+                        data[item] = data[item].reduce((acc, item) => {
+                            acc[item.type] = item.value;
+                            return acc;
+                        }, {})
+                    })
+                    item_map[select_version] = data;
+                }
+            }
+            update_items_list();
+            get_components();
+        }
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            document.getElementById('versions').addEventListener('change', versions_update);
+            document.getElementById('input_item').addEventListener('input', get_components);
+            document.getElementById('no_namespace').addEventListener('click', get_components);
+            document.getElementById('show_snapshots').addEventListener('click', update_versions_list);
+            await get_versions();
+            await update_items_list();
+        })
+
+        function loadItem(item) {
+            document.getElementById('input_item').value = item[0];
+            document.getElementById('versions').value = item[1] || '';
+            versions_update();
+        }
+
+        async function get_components() {
+            const input_item = document.getElementById('input_item').value;
+            const this_item = item_map[select_version][input_item];
+            const JSON_output = document.getElementById('JSON');
+            const SNBT_output = document.getElementById('SNBT');
+            const Give_output = document.getElementById('Give');
+            JSON_output.value = this_item ? JSON.stringify(this_item, null, 2) : '';
+            SNBT_output.value = this_item ? jsonToSNBT(this_item) : '';
+            Give_output.value = this_item ? `give @p ${input_item}${jsonToGive(this_item)}` : '';
+            urlParams.searchParams.set('ver', select_version);
+            urlParams.searchParams.set('id', input_item);
+            if (!urlParams.searchParams.get('ver')) urlParams.searchParams.delete('ver');
+            if (!urlParams.searchParams.get('id')) urlParams.searchParams.delete('id');
+            window.history.pushState({}, '', urlParams);
+        }
+
+        function jsonToSNBT(value) {
+            if (Array.isArray(value)) {
+                return `[${value.map(jsonToSNBT).join(",")}]`;
+            } else if (typeof value === 'object' && value !== null) {
+                return `{${Object.entries(value).map(([k, v]) => `${k}:${jsonToSNBT(v)}`).join(",")}}`;
+            } else if (typeof value === 'string') {
+                return `"${value}"`;
+            } else {
+                return value;
+            }
+        }
+
+        function jsonToGive(obj) {
+            const snbt = Object.entries(obj).map(([key, value]) => {
+                key = document.getElementById('no_namespace').checked ? key.replace('minecraft:', '') : key;
+                if (Array.isArray(value)) {
+                    // Проверяем, является ли значение массивом
+                    return `${key}=${jsonToSNBT(value)}`;
+                } else if (typeof value === 'object' && value !== null) {
+                    // Проверяем, является ли значением объект
+                    return `${key}=${jsonToSNBT(value)}`;
+                } else if (typeof value === 'string') {
+                    // Для строковых значений добавляем кавычки
+                    return `${key}='${value}'`;
+                } else {
+                    // Для остальных типов значений
+                    return `${key.replace('minecraft:', '')}=${value}`;
+                }
+            });
+            return `[${snbt.join(",")}]`;
+        }
+
+        function reset() {
+            document.getElementById('input_item').value = '';
+            get_components();
+        }
+
+        function log(...msg) {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`[${timestamp}]`, ...msg)
+        }
+    </script>
+</body>
+
+</html>

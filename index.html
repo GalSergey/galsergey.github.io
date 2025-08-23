@@ -494,7 +494,7 @@
             // Пример содержимого
             const exampleCode = `{%- set dialog = [] -%}\n{%- for message in messages -%}\n  {%- set dialog = dialog.append(authors[loop.index0]|replace('user','#### client\\n')|replace('support','#### support\\n') + message + '\\n') -%}\n{%- endfor -%}\n{%- set content = [\n  "<DIALOG>\\n# Диалог между клиентом и саппортом:",\n  dialog|join('\\n'), \n  "</DIALOG>\\n\\n<META>\\n# Мета-информация:",\n  full_meta|join(), \n  "</META>\\n\\n\\nНАПИШИ ТОЛЬКО ОТВЕТ ПОЛЬЗОВАТЕЛЮ, НЕ НАДО РАЗМЫШЛЯТЬ!!! НЕ ДУБЛИРУЙ ДИАЛОГ В СВОЙ ОТВЕТ!!!"\n] -%}\n\n{\n  "model": "anthropic/claude-sonnet-4",\n  "system": [\n        {\n            "type": "text",\n            "text": {{static_part_of_prompt|tojson}},\n            "cache_control": {"type": "ephemeral", "ttl": "1h"}\n        }\n    ],\n  "messages": [\n    {\n      "role": "user",\n      "content": {{content|join('\\n')|tojson}}\n    }\n  ]\n}`;
 
-            exampleJSON = `{\n    "static_part_of_prompt": "Ты хороший GPT который хорошо делает свою работу.",\n    "messages": ["Где заказы?","Посмотрите в приложение.","Спасибо!"],\n    "authors": ["user","support","user"]\n}`
+            exampleJSON = `{\n    "static_part_of_prompt": "Ты хороший GPT который хорошо делает свою работу.",\n    "messages": ["Где заказы?","Посмотрите в приложении.","Спасибо!"],\n    "authors": ["user","support","user"]\n}`
 
             // ===== Создаём редакторы =====
             const templateEditor = monaco.editor.create(document.getElementById('top-left'), {

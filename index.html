@@ -311,7 +311,7 @@
                             end: /^\s*\{%-?\s*end(if|for|macro|block|filter|call|raw|autoescape)\b.*-?%\}/,
                         }
                     },
-                    brackets: [['{%', '%}'],['{{', '}}'],['{', '}'], ['[', ']'], ['(', ')']]
+                    brackets: [['{%', '%}'], ['{{', '}}'], ['{', '}'], ['[', ']'], ['(', ')']]
                 }));
 
                 monaco.editor.defineTheme("jinja", {
@@ -521,7 +521,7 @@
                 unicodeHighlight: {
                     ambiguousCharacters: false, // отключает подсветку похожих символов
                     invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false         // отключает предупреждение для всех не-ASCII
+                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
                 }
             });
 
@@ -535,7 +535,7 @@
                 unicodeHighlight: {
                     ambiguousCharacters: false, // отключает подсветку похожих символов
                     invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false         // отключает предупреждение для всех не-ASCII
+                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
                 }, readOnly: true
             });
 

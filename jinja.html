@@ -23,7 +23,8 @@
             width: 100%;
         }
 
-        #left {
+        #left,
+        #right {
             flex: 1;
             /* занимает половину */
             display: flex;
@@ -32,23 +33,14 @@
         }
 
         #top-left-container,
-        #bottom-left-container {
+        #bottom-left-container,
+        #top-right-container,
+        #bottom-right-container {
             flex: 1;
             /* каждая половина занимает 50% */
             display: flex;
             flex-direction: column;
             border-bottom: 2px solid #444;
-        }
-
-        #right {
-            flex: 1;
-        }
-
-        #right-container {
-            flex: 1;
-            /* занимает вторую половину */
-            display: flex;
-            flex-direction: column;
         }
 
         .editor {
@@ -69,12 +61,11 @@
             justify-content: center;
             color: #eee;
             font-size: 14px;
-            padding: 4px 8px;
+            padding: 4px 0px;
             border-bottom: 1px solid #444;
             font-family: sans-serif;
-            height: 24px;
+            height: 30px;
             flex-shrink: 0;
-
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
@@ -93,14 +84,27 @@
                 <div id="bottom-left" class="editor"></div>
             </div>
         </div>
-
-        <div id="right-container" class="editor-container">
-            <div class="editor-label">
-                Результат:
-                <label><input type="radio" name="output-format" value="json" checked> JSON</label>
-                <label><input type="radio" name="output-format" value="text"> TEXT</label>
+        <div id="right">
+            <div id="top-right-container" class="editor-container">
+                <div class="editor-label">
+                    Результат:
+                    <label><input type="radio" name="output-format" value="json" checked> JSON</label>
+                    <label><input type="radio" name="output-format" value="text"> TEXT</label>
+                </div>
+                <div id="top-right" class="editor"></div>
             </div>
-            <div id="right" class="editor"></div>
+            <div id="bottom-right-container" class="editor-container">
+                <div class="editor-label">
+                    <div
+                        style="width: 98%; display: flex; flex-direction: column; flex-wrap: wrap; align-items: center;">
+                        JSONPath отдельного рендера:
+                        <input id="jsonpath" class="editor-container"
+                            style="background: #202020; color: #eee; outline-width: 0px; border: unset"
+                            placeholder="$.messages[0].content" value="$.messages[0].content">
+                    </div>
+                </div>
+                <div id="bottom-right" class="editor"></div>
+            </div>
         </div>
     </div>
 
@@ -525,7 +529,21 @@
                 }
             });
 
-            const outputEditor = monaco.editor.create(document.getElementById('right'), {
+            const outputEditor = monaco.editor.create(document.getElementById('top-right'), {
+                value: '',
+                language: 'json',
+                theme: 'jinja',
+                fontSize: 14,
+                wordWrap: "on",
+                minimap: { enabled: false },
+                unicodeHighlight: {
+                    ambiguousCharacters: false, // отключает подсветку похожих символов
+                    invisibleCharacters: false, // отключает подсветку невидимых символов
+                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
+                }, readOnly: true
+            });
+
+            const textEditor = monaco.editor.create(document.getElementById('bottom-right'), {
                 value: '',
                 language: 'json',
                 theme: 'jinja',
@@ -583,7 +601,8 @@
             const editors = [
                 { editor: templateEditor, container: document.getElementById("top-left") },
                 { editor: dataEditor, container: document.getElementById("bottom-left") },
-                { editor: outputEditor, container: document.getElementById("right") }
+                { editor: outputEditor, container: document.getElementById("top-right") },
+                { editor: textEditor, container: document.getElementById("bottom-right") }
             ];
 
             const resizeObserver = new ResizeObserver(() => {
@@ -620,11 +639,31 @@
                 }
 
                 outputEditor.setValue(formatted);
+                renderJsonPath(output)
             }
 
+            async function renderJsonPath(rawText) {
+                if (!rawText) return;
+                const json = rawText;
+                const path = document.getElementById("jsonpath").value;
+                const response = await fetch("https://far.ddns.me:8000/jsonpath", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "json": JSON.parse(json), "path": path })
+                });
+                const result = await response.json();
+                if (result.error) {
+                    textEditor.setValue(result.error)
+                } else {
+                    textEditor.setValue(result.result[0] ? result.result[0] : "Unknown JSONPath")
+                }
+            }
+
+            document.getElementById("jsonpath").addEventListener("input", () => { renderJsonPath(output) });
+
             // обработчик на все радиокнопки
-            document.querySelectorAll('input[name="output-format"]').forEach(radio => {
-                radio.addEventListener("change", () => {
+            document.querySelectorAll('input[name="output-format"]').forEach(input => {
+                input.addEventListener("change", () => {
                     renderOutput(output);
                 });
             });

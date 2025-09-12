@@ -1,6 +1,6 @@
 # Jinja2 Renderer
 
-https://far.ddns.me/jinja
+https://galsergey.github.io/jinja
 
 Веб-приложение для рендеринга Jinja2 шаблонов с поддержкой JSONPath извлечения данных.
 

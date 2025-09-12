@@ -1,5 +1,7 @@
 # Jinja2 Renderer
 
+https://far.ddns.me/jinja
+
 Веб-приложение для рендеринга Jinja2 шаблонов с поддержкой JSONPath извлечения данных.
 
 ## Особенности

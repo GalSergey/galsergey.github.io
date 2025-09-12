@@ -1,675 +1,117 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
-    <title>Jinja2 Renderer</title>
-    <link rel="icon" href="/assets/jinja.png" type="image/png">
-    <style>
-        html,
-        body {
-            background: #1e1e1e;
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #main {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
-
-        #left,
-        #right {
-            flex: 1;
-            /* занимает половину */
-            display: flex;
-            flex-direction: column;
-            border-right: 2px solid #444;
-        }
-
-        #top-left-container,
-        #bottom-left-container,
-        #top-right-container,
-        #bottom-right-container {
-            flex: 1;
-            /* каждая половина занимает 50% */
-            display: flex;
-            flex-direction: column;
-            border-bottom: 2px solid #444;
-        }
-
-        .editor {
-            flex: 1;
-            width: 100%;
-        }
-
-        .editor-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-        }
-
-        .editor-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #eee;
-            font-size: 14px;
-            padding: 4px 0px;
-            border-bottom: 1px solid #444;
-            font-family: sans-serif;
-            height: 30px;
-            flex-shrink: 0;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jinja2 Renderer - Онлайн редактор шаблонов</title>
+    <meta name="description" content="Веб-приложение для рендеринга Jinja2 шаблонов с поддержкой JSONPath">
+    <meta name="keywords" content="Jinja2, шаблоны, рендеринг, JSON, JSONPath">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="./assets/jinja.png" type="image/png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./styles.css">
+    
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 
 <body>
-    <div id="main">
-        <div id="left">
-            <div id="top-left-container" class="editor-container">
-                <div class="editor-label">Jinja шаблон</div>
-                <div id="top-left" class="editor"></div>
-            </div>
-            <div id="bottom-left-container" class="editor-container">
-                <div class="editor-label">Входные данные (JSON)</div>
-                <div id="bottom-left" class="editor"></div>
-            </div>
-        </div>
-        <div id="right">
-            <div id="top-right-container" class="editor-container">
-                <div class="editor-label">
-                    Результат:
-                    <label><input type="radio" name="output-format" value="json" checked> JSON</label>
-                    <label><input type="radio" name="output-format" value="text"> TEXT</label>
-                </div>
-                <div id="top-right" class="editor"></div>
-            </div>
-            <div id="bottom-right-container" class="editor-container">
-                <div class="editor-label">
-                    <div
-                        style="width: 98%; display: flex; flex-direction: column; flex-wrap: wrap; align-items: center;">
+    <main id="main">
+        <!-- Левая панель -->
+        <section id="left">
+            <!-- Редактор шаблона -->
+            <article id="top-left-container" class="editor-container">
+                <header class="editor-label">
+                    <h2>Jinja2 шаблон</h2>
+                    <div class="template-controls">
+                        <input id="template-name" type="text" placeholder="Имя шаблона" class="template-name-input">
+                        <button id="save-template-btn" class="template-button" title="Сохранить шаблон">💾</button>
+                        <select id="template-select" class="template-select">
+                            <option value="">Выберите шаблон</option>
+                        </select>
+                        <button id="load-template-btn" class="template-button" title="Загрузить шаблон">📂</button>
+                        <button id="delete-template-btn" class="template-button delete" title="Удалить шаблон">🗑️</button>
+                        <button id="reset-btn" class="reset-button" title="Сбросить к примерам">🔄</button>
+                    </div>
+                </header>
+                <div id="top-left" class="editor" role="textbox" aria-label="Редактор Jinja2 шаблона"></div>
+            </article>
+            
+            <!-- Редактор входных данных -->
+            <article id="bottom-left-container" class="editor-container">
+                <header class="editor-label">
+                    <h2>Входные данные (JSON)</h2>
+                </header>
+                <div id="bottom-left" class="editor" role="textbox" aria-label="Редактор входных данных JSON"></div>
+            </article>
+        </section>
+        
+        <!-- Правая панель -->
+        <section id="right">
+            <!-- Редактор результата -->
+            <article id="top-right-container" class="editor-container">
+                <header class="editor-label">
+                    <h2>Результат:</h2>
+                    <fieldset>
+                        <legend class="sr-only">Формат вывода</legend>
+                        <label>
+                            <input type="radio" name="output-format" value="json" checked>
+                            JSON
+                        </label>
+                        <label>
+                            <input type="radio" name="output-format" value="text">
+                            TEXT
+                        </label>
+                    </fieldset>
+                </header>
+                <div id="top-right" class="editor" role="textbox" aria-label="Редактор результата рендеринга" aria-readonly="true"></div>
+            </article>
+            
+            <!-- Редактор JSONPath -->
+            <article id="bottom-right-container" class="editor-container">
+                <header class="editor-label">
+                    <div style="width: 98%; display: flex; flex-direction: column; flex-wrap: wrap; align-items: center;">
                         JSONPath отдельного рендера:
                         <input id="jsonpath" class="editor-container"
                             style="background: #202020; color: #eee; outline-width: 0px; border: unset"
                             placeholder="$.messages[0].content" value="$.messages[0].content">
                     </div>
-                </div>
-                <div id="bottom-right" class="editor"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
-        require(['vs/editor/editor.main'], function (monaco) {
-
-
-            // === Наш регистр языка Jinja2 ===
-            function registerJinja2(monaco) {
-                const id = 'jinja2';
-                monaco.languages.register({
-                    id,
-                    extensions: ['.j2', '.jinja', '.jinja2', '.html.j2', '.tpl'],
-                    aliases: ['Jinja2', 'Jinja'],
-                    mimetypes: ['text/x-jinja2', 'text/jinja2'],
-                });
-
-                const keywords = [
-                    'if', 'elif', 'else', 'endif',
-                    'for', 'endfor', 'in', 'recursive', 'reversed', 'loop',
-                    'block', 'endblock', 'extends', 'include', 'import', 'from', 'with', 'without', 'context',
-                    'macro', 'endmacro', 'call', 'endcall',
-                    'filter', 'endfilter', 'set',
-                    'raw', 'endraw', 'trans', 'endtrans', 'do',
-                    'autoescape', 'endautoescape', 'scoped',
-                    'as', 'true', 'false', 'none', 'is', 'not', 'and', 'or', 'test', 'capture'
-                ];
-
-                const filtersAndTests = [
-                    // Common filters & tests (not exhaustive)
-                    'safe', 'escape', 'e', 'capitalize', 'lower', 'upper', 'title', 'trim', 'striptags', 'replace', 'default', 'd',
-                    'join', 'list', 'length', 'reverse', 'sort', 'unique', 'first', 'last', 'random', 'slice',
-                    'abs', 'round', 'int', 'float', 'string', 'format', 'urlencode', 'json', 'tojson',
-                    'map', 'select', 'reject', 'selectattr', 'rejectattr', 'min', 'max',
-                    'file_exists', 'defined', 'undefined', 'equalto', 'odd', 'even', 'divisibleby', 'iterable'
-                ];
-
-
-                monaco.languages.setMonarchTokensProvider(id, /** @type {monaco.languages.IMonarchLanguage} */({
-                    defaultToken: '',
-                    tokenPostfix: '.jinja2',
-
-                    brackets: [
-                        { open: '{', close: '}', token: 'delimiter.curly' },
-                        { open: '(', close: ')', token: 'delimiter.parenthesis' },
-                        { open: '[', close: ']', token: 'delimiter.bracket' },
-                    ],
-
-                    keywords,
-                    filters: filtersAndTests,
-
-                    operators: [
-                        '+', '-', '*', '/', '//', '%', '**', '~',
-                        '==', '!=', '>', '<', '>=', '<=',
-                        '=', '|', ':', ',', '.', '?', '??',
-                    ],
-
-                    symbols: /[=><!~?:&|+\-*\/%\^]+/, // eslint-disable-line
-
-                    // Recognize numbers and identifiers
-                    escapes: /\\(?:[abfnrtv\\"'`]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4})/,
-                    digits: /\d+(_\d+)*/,
-                    identifier: /[A-Za-z_][\w]*/,
-
-                    // The overall strategy:
-                    // - Text is plain until we hit one of the Jinja delimiters, then we enter a sub-state.
-                    tokenizer: {
-                        root: [
-                            // Comments: {# ... #}
-                            [/\{#-?/, { token: 'comment.block.jinja', next: '@comment' }],
-
-                            // Output expressions: {{ ... }}
-                            [/\{\{-?/, { token: 'delimiter.brace-expression.jinja', next: '@output' }],
-
-                            // Statements/tags: {% ... %}
-                            [/\{%-?/, { token: 'delimiter.brace-statement.jinja', next: '@tag' }],
-
-
-                            // Everything else stays as text (could be HTML, Markdown, etc.)
-                            [/[^\{]+/, ''],
-                            [/\{/, ''], // stray '{' fallthrough
-                        ],
-
-                        json: [
-                            [/\[|{/, "json", "json2"],
-                            [/\]|}/, "json3", "@pop"],
-                            ["", "", "root"],
-                        ],
-
-                        json2: [
-                            [/\[|{/, "json2", "json3"],
-                            [/\]|}/, "json", "@pop"],
-                            ["", "", "root"],
-                        ],
-
-                        json3: [
-                            [/\[|{/, "json3", "json"],
-                            [/\]|}/, "json2", "@pop"],
-                            ["", "", "root"],
-                        ],
-
-                        // {# comment #}
-                        comment: [
-                            [/-?#\}/, { token: 'comment.block.jinja', next: '@pop' }],
-                            [/./, 'comment.block.jinja']
-                        ],
-
-                        // {{ expression }}
-                        output: [
-                            // Close must allow whitespace control: -}}
-                            [/-?\}\}/, { token: 'delimiter.brace-expression.jinja', next: '@pop' }],
-                            { include: '@expression' },
-                        ],
-
-                        // {% tag %}
-                        tag: [
-                            // Handle raw blocks specially: {% raw %} ... {% endraw %}
-                            [/(\s*)(raw)(\s*)(%}-?)/, ['', 'keyword.jinja', '', { token: 'delimiter.brace.jinja', next: '@rawBlock' }]],
-                            [/-?%\}/, { token: 'delimiter.brace-statement.jinja', next: '@pop' }],
-                            { include: '@expression' },
-                        ],
-
-                        // Inside a raw block: everything until {% endraw %}
-                        rawBlock: [
-                            // End tag
-                            [/\{%-?\s*endraw\s*-?%\}/, { token: 'delimiter.brace.jinja', next: '@pop' }],
-                            [/./, '']
-                        ],
-
-                        // Reusable expression pieces
-                        expression: [
-                            // Strings
-                            [/\"([^\\\"]|@escapes)*\"/, 'string'],
-                            [/'([^\\']|@escapes)*'/, 'string'],
-                            [/`([^\\`]|@escapes)*`/, 'string'],
-
-                            // Numbers
-                            [/(@digits\.@digits([eE][+\-]?@digits)?|@digits([eE][+\-]?@digits)?)/, 'number'],
-
-                            // Operators & symbols
-                            [/@symbols/, {
-                                cases: {
-                                    '@operators': 'operator',
-                                    '@default': ''
-                                }
-                            }],
-
-                            // Filters (e.g. |safe | replace)
-                            [/\|\s*@identifier/, {
-                                cases: {
-                                    '@filters': 'predefined',
-                                    '@default': 'operator'
-                                }
-                            }],
-
-                            // Tests (e.g. is odd)
-                            [/(\bis\b)(\s+)(@identifier)/, ['keyword.jinja', '', {
-                                cases: {
-                                    '@filters': 'predefined',
-                                    '@default': 'type.identifier'
-                                }
-                            }]],
-
-                            // Keywords
-                            [/@identifier/, {
-                                cases: {
-                                    '@keywords': 'keyword.jinja',
-                                    '@default': 'variable'
-                                }
-                            }],
-
-                            // Punctuation
-                            [/\(|\)|\[|\]|\{|\}|\.|,|:|;/, 'delimiter']
-                        ],
-
-                    }
-                }));
-
-                monaco.languages.setLanguageConfiguration(id, /** @type {monaco.languages.LanguageConfiguration} */({
-                    comments: {
-                        blockComment: ['{#', '#}'],
-                    },
-                    autoClosingPairs: [
-                        { open: '{', close: '}' },
-                        { open: '[', close: ']' },
-                        { open: '(', close: ')' },
-                        { open: '"', close: '"', notIn: ['string'] },
-                        { open: "'", close: "'", notIn: ['string'] },
-                        { open: '`', close: '`', notIn: ['string'] },
-                        // Jinja-specific pairs
-                        { open: '{{ ', close: ' }}' },
-                        { open: '{% ', close: ' %}' },
-                        { open: '{# ', close: ' #}' },
-                    ],
-                    surroundingPairs: [
-                        { open: '{', close: '}' },
-                        { open: '[', close: ']' },
-                        { open: '(', close: ')' },
-                        { open: '"', close: '"' },
-                        { open: "'", close: "'" },
-                        { open: '`', close: '`' },
-                    ],
-                    folding: {
-                        offSide: false,
-                        markers: {
-                            start: /^\s*\{%-?\s*(if|for|macro|block|filter|call|raw|autoescape)\b.*/,
-                            end: /^\s*\{%-?\s*end(if|for|macro|block|filter|call|raw|autoescape)\b.*-?%\}/,
-                        }
-                    },
-                    brackets: [['{%', '%}'], ['{{', '}}'], ['{', '}'], ['[', ']'], ['(', ')']]
-                }));
-
-                monaco.editor.defineTheme("jinja", {
-                    base: "vs-dark",
-                    inherit: true,
-                    rules: [
-                        { token: "json", foreground: 'ffd700' },
-                        { token: "json2", foreground: 'da70d6' },
-                        { token: "json3", foreground: '179fff' },
-
-                        { token: "delimiter.brace-expression.jinja", foreground: "da70d6" },
-                        { token: "delimiter.brace-statement.jinja", foreground: "da70d6" },
-                        { token: "delimiter.brace.jinja", foreground: "da70d6" },
-                    ],
-                    colors: {
-                    },
-                });
-
-                // Basic completion for tags, end-tags, and filters
-                monaco.languages.registerCompletionItemProvider(id, {
-                    triggerCharacters: ['{', '%', '|', ' '],
-                    provideCompletionItems(model, position) {
-                        const suggestions = [];
-
-                        // Tag starts
-                        suggestions.push(
-                            ...['if', 'for', 'block', 'macro', 'filter', 'call', 'set', 'with', 'trans', 'raw', 'autoescape', 'extends', 'include', 'import', 'from']
-                                .map(label => ({
-                                    label: `{% ${label} %}`,
-                                    kind: monaco.languages.CompletionItemKind.Keyword,
-                                    insertText: `{% ${label} $0 %}`,
-                                    range: undefined,
-                                }))
-                        );
-
-                        // End tags
-                        suggestions.push(
-                            ...['endif', 'endfor', 'endblock', 'endmacro', 'endfilter', 'endcall', 'endraw', 'endautoescape']
-                                .map(label => ({
-                                    label: `{% ${label} %}`,
-                                    kind: monaco.languages.CompletionItemKind.Keyword,
-                                    insertText: `{% ${label} %}`,
-                                    range: undefined,
-                                }))
-                        );
-
-                        // Output braces
-                        suggestions.push({
-                            label: '{{ … }}',
-                            kind: monaco.languages.CompletionItemKind.Snippet,
-                            insertText: '{{ ${1:var} }}',
-                        });
-
-                        // Filters & tests
-                        suggestions.push(
-                            ...filtersAndTests.map(f => ({
-                                label: `| ${f}`,
-                                kind: monaco.languages.CompletionItemKind.Function,
-                                insertText: `| ${f}`,
-                            }))
-                        );
-
-                        return { suggestions };
-                    },
-                });
-
-                // Simple folding range provider based on Jinja block pairs
-                monaco.languages.registerFoldingRangeProvider(id, {
-                    provideFoldingRanges(model) {
-                        const lines = model.getLineCount();
-                        const starts = [];
-                        const ranges = [];
-                        const startRegex = /\{%-?\s*(if|for|block|macro|filter|call|raw|autoescape)\b/;
-                        const endRegex = /\{%-?\s*end(if|for|block|macro|filter|call|raw|autoescape)\b.*%\}/;
-
-                        for (let i = 1; i <= lines; i++) {
-                            const text = model.getLineContent(i);
-                            if (startRegex.test(text)) {
-                                starts.push(i);
-                            } else if (endRegex.test(text)) {
-                                const start = starts.pop();
-                                if (start) {
-                                    const end = i;
-                                    if (end > start) ranges.push({ start, end, kind: monaco.languages.FoldingRangeKind.Region });
-                                }
-                            }
-                        }
-                        return ranges;
-                    }
-                });
-
-                // Optional: basic hover that shows variable names as variables & keywords as such
-                monaco.languages.registerHoverProvider(id, {
-                    provideHover(model, position) {
-                        const word = model.getWordAtPosition(position);
-                        if (!word) return null;
-                        const text = word.word;
-                        if (keywords.includes(text)) {
-                            return {
-                                range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
-                                contents: [{ value: `**Jinja2 keyword**: \\\`${text}\\\`` }]
-                            };
-                        }
-                        if (filtersAndTests.includes(text)) {
-                            return {
-                                range: new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn),
-                                contents: [{ value: `**Jinja2 filter/test**: \\\`${text}\\\`` }]
-                            };
-                        }
-                        return null;
-                    }
-                });
-
-                monaco.languages.registerDocumentFormattingEditProvider('jinja2', {
-                    provideDocumentFormattingEdits(model, options) {
-                        const indentSize = options.tabSize || 2;
-                        let text = model.getValue();
-
-                        // 1. Выделяем теги Jinja и заменяем их на маркеры
-                        const tagRegex = /(\{\{.*?\}\}|\{%-?[\s\S]*?%-?\})/g;
-                        let parts = [];
-                        let lastIndex = 0;
-                        let match;
-                        while ((match = tagRegex.exec(text)) !== null) {
-                            if (match.index > lastIndex) {
-                                parts.push({ type: 'json', value: text.slice(lastIndex, match.index) });
-                            }
-                            parts.push({ type: 'jinja', value: match[0] });
-                            lastIndex = match.index + match[0].length;
-                        }
-                        if (lastIndex < text.length) {
-                            parts.push({ type: 'json', value: text.slice(lastIndex) });
-                        }
-
-                        // 2. Форматируем каждую часть отдельно
-                        parts = parts.map(part => {
-                            if (part.type === 'json') {
-                                let trimmed = part.value.trim();
-                                if (!trimmed) return part; // пустое — без изменений
-                                try {
-                                    const parsed = JSON.parse(trimmed);
-                                    part.value = '\n' + JSON.stringify(parsed, null, indentSize) + '\n';
-                                } catch {
-                                    // если это невалидный JSON — оставляем как есть
-                                }
-                            } else if (part.type === 'jinja') {
-                                let lines = part.value.split('\n');
-                                let indent = 0;
-                                lines = lines.map(line => {
-                                    const trimmed = line.trim();
-                                    if (/^\{%-?\s*end\w+/.test(trimmed)) indent = Math.max(indent - 1, 0);
-                                    const res = ' '.repeat(indent * indentSize) + trimmed;
-                                    if (/^\{%-?\s*(if|for|block|macro|filter|call|raw|autoescape)\b/.test(trimmed) && !/end\w+/.test(trimmed)) {
-                                        indent++;
-                                    }
-                                    return res;
-                                });
-                                part.value = lines.join('\n');
-                            }
-                            return part;
-                        });
-
-                        // 3. Склеиваем обратно
-                        const formattedText = parts.map(p => p.value).join('');
-
-                        return [{
-                            range: model.getFullModelRange(),
-                            text: formattedText
-                        }];
-                    }
-                });
-
-
-
-            }
-
-            // Регистрируем язык
-            registerJinja2(monaco);
-
-            // Пример содержимого
-            const exampleCode = `{%- set dialog = [] -%}\n{%- for message in messages -%}\n  {%- set dialog = dialog.append(authors[loop.index0]|replace('user','#### client\\n')|replace('support','#### support\\n') + message + '\\n') -%}\n{%- endfor -%}\n{%- set content = [\n  "<DIALOG>\\n# Диалог между клиентом и саппортом:",\n  dialog|join('\\n'), \n  "</DIALOG>\\n\\n<META>\\n# Мета-информация:",\n  full_meta|join(), \n  "</META>\\n\\n\\nНАПИШИ ТОЛЬКО ОТВЕТ ПОЛЬЗОВАТЕЛЮ, НЕ НАДО РАЗМЫШЛЯТЬ!!! НЕ ДУБЛИРУЙ ДИАЛОГ В СВОЙ ОТВЕТ!!!"\n] -%}\n\n{\n  "model": "anthropic/claude-sonnet-4",\n  "system": [\n        {\n            "type": "text",\n            "text": {{static_part_of_prompt|tojson}},\n            "cache_control": {"type": "ephemeral", "ttl": "1h"}\n        }\n    ],\n  "messages": [\n    {\n      "role": "user",\n      "content": {{content|join('\\n')|tojson}}\n    }\n  ]\n}`;
-
-            exampleJSON = `{\n    "static_part_of_prompt": "Ты хороший GPT который хорошо делает свою работу.",\n    "messages": ["Где заказы?","Посмотрите в приложении.","Спасибо!"],\n    "authors": ["user","support","user"]\n}`
-
-            // ===== Создаём редакторы =====
-            const templateEditor = monaco.editor.create(document.getElementById('top-left'), {
-                value: exampleCode,
-                language: 'jinja2',
-                theme: 'vs-dark',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }
-            });
-
-            const dataEditor = monaco.editor.create(document.getElementById('bottom-left'), {
-                value: exampleJSON,
-                language: 'json',
-                theme: 'vs-dark',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }
-            });
-
-            const outputEditor = monaco.editor.create(document.getElementById('top-right'), {
-                value: '',
-                language: 'json',
-                theme: 'jinja',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }, readOnly: true
-            });
-
-            const textEditor = monaco.editor.create(document.getElementById('bottom-right'), {
-                value: '',
-                language: 'json',
-                theme: 'jinja',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }, readOnly: true
-            });
-
-            function getSelectedFormat() {
-                return document.querySelector('input[name="output-format"]:checked').value;
-            }
-
-            // ===== Рендеринг шаблона при изменении =====
-            async function renderTemplate() {
-                const template = templateEditor.getValue();
-                let data;
-                try {
-                    data = JSON.parse(dataEditor.getValue());
-                } catch (error) {
-                    outputEditor.setValue("// Ошибка во входных данных:\n" + error.message);
-                    return; // чтобы дальше не выполнялось
-                }
-
-
-                const response = await fetch("https://far.ddns.me:8000/render", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ template, data })
-                });
-                const result = await response.json();
-
-                if (result.ok) {
-                    renderOutput(result.result);
-                } else {
-                    outputEditor.setValue("// Ошибка рендеринга\n" + result.error);
-                }
-            }
-
-
-            templateEditor.onDidChangeModelContent(renderTemplate);
-            dataEditor.onDidChangeModelContent(renderTemplate);
-            renderTemplate();
-
-            window.addEventListener("resize", () => {
-                templateEditor.layout();
-                dataEditor.layout();
-                outputEditor.layout();
-            });
-
-            const editors = [
-                { editor: templateEditor, container: document.getElementById("top-left") },
-                { editor: dataEditor, container: document.getElementById("bottom-left") },
-                { editor: outputEditor, container: document.getElementById("top-right") },
-                { editor: textEditor, container: document.getElementById("bottom-right") }
-            ];
-
-            const resizeObserver = new ResizeObserver(() => {
-                editors.forEach(({ editor }) => editor.layout());
-            });
-
-            editors.forEach(({ container }) => resizeObserver.observe(container));
-
-            let output;
-
-            function renderOutput(rawText) {
-                let formatted = rawText;
-
-                try {
-                    const format = getSelectedFormat();
-
-                    if (format === "json") {
-                        const parsed = JSON.parse(rawText);
-                        formatted = JSON.stringify(parsed, null, 2);
-                        output = formatted
-                    } else {
-                        try {
-                            formatted = formatted.replace(/\\u[0-9a-fA-F]{4}/g, match => {
-                                return String.fromCharCode(parseInt(match.slice(2), 16));
-                            });
-                            output = formatted
-
-                        } catch (error) {
-                            formatted = error.message;
-                        }
-                    }
-                } catch (error) {
-                    formatted = "// Ошибка в шаблоне\n" + error.message + "\n\n" + formatted;
-                }
-
-                outputEditor.setValue(formatted);
-                renderJsonPath(output)
-            }
-
-            async function renderJsonPath(rawText) {
-                if (!rawText) return;
-                const json = rawText;
-                const path = document.getElementById("jsonpath").value;
-                const response = await fetch("https://far.ddns.me:8000/jsonpath", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ "json": JSON.parse(json), "path": path })
-                });
-                const result = await response.json();
-                if (result.error) {
-                    textEditor.setValue(result.error)
-                } else {
-                    textEditor.setValue(result.result[0] ? result.result[0] : "Unknown JSONPath")
-                }
-            }
-
-            document.getElementById("jsonpath").addEventListener("input", () => { renderJsonPath(output) });
-
-            // обработчик на все радиокнопки
-            document.querySelectorAll('input[name="output-format"]').forEach(input => {
-                input.addEventListener("change", () => {
-                    renderOutput(output);
-                });
-            });
-
-        });
-    </script>
+                </header>
+                <div id="bottom-right" class="editor" role="textbox" aria-label="Редактор результата JSONPath" aria-readonly="true"></div>
+            </article>
+        </section>
+    </main>
+
+    <!-- Application Script -->
+    <script src="./app.js"></script>
+    
+    <!-- Screen Reader Only Styles -->
+    <style>
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        fieldset {
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        legend {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </body>
-
 </html>

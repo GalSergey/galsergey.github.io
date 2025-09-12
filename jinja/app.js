@@ -8,7 +8,7 @@ const CONFIG = {
     API_BASE_URL: 'https://far.ddns.me:8000',
     MONACO_VERSION: '0.45.0',
     JS_YAML_VERSION: '4.1.0',
-    RENDER_DELAY: 1000, // Задержка рендеринга в миллисекундах
+    RENDER_DELAY: 3000, // Задержка рендеринга в миллисекундах (3 секунды)
     STORAGE_KEYS: {
         TEMPLATE: 'jinja2_template',
         DATA: 'jinja2_data',
@@ -22,7 +22,17 @@ const CONFIG = {
 const EXAMPLE_DATA = {
     template: `{%- set dialog = [] -%}
 {%- for message in messages -%}
-  {%- set dialog = dialog.append(authors[loop.index0]|replace('user','#### client\\n')|replace('support','#### support\\n') + message + '\\n') -%}
+  {%- if message|length > 0 -%}
+    {%- for word in message.split() -%}
+      {%- if word|length > 3 -%}
+        {%- set dialog = dialog.append(authors[loop.index0]|replace('user','#### client\\n')|replace('support','#### support\\n') + word + '\\n') -%}
+      {%- else -%}
+        {%- set dialog = dialog.append('short: ' + word + '\\n') -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- else -%}
+    {%- set dialog = dialog.append('empty message\\n') -%}
+  {%- endif -%}
 {%- endfor -%}
 {%- set content = [
   "<DIALOG>\\n# Диалог между клиентом и саппортом:",
@@ -88,7 +98,7 @@ function registerJinja2Language(monaco) {
         'file_exists', 'defined', 'undefined', 'equalto', 'odd', 'even', 'divisibleby', 'iterable'
     ];
 
-    // Настройка токенизатора
+    // Настройка токенизатора с поддержкой вложенности
     monaco.languages.setMonarchTokensProvider(id, {
         defaultToken: '',
         tokenPostfix: '.jinja2',
@@ -211,26 +221,158 @@ function registerJinja2Language(monaco) {
         brackets: [['{%', '%}'], ['{{', '}}'], ['{', '}'], ['[', ']'], ['(', ')']]
     });
 
-    // Создание темы
+    // Создание темы с поддержкой вложенности
     monaco.editor.defineTheme("jinja", {
         base: "vs-dark",
         inherit: true,
         rules: [
-            { token: "json", foreground: 'ffd700' },
-            { token: "json2", foreground: 'da70d6' },
-            { token: "json3", foreground: '179fff' },
+            // Базовые токены Jinja2
             { token: "delimiter.brace-expression.jinja", foreground: "da70d6" },
             { token: "delimiter.brace-statement.jinja", foreground: "da70d6" },
             { token: "delimiter.brace.jinja", foreground: "da70d6" },
+            { token: "keyword.jinja", foreground: "569cd6", fontStyle: "bold" },
+            { token: "comment.block.jinja", foreground: "6a9955", fontStyle: "italic" },
+            { token: "string", foreground: "ce9178" },
+            { token: "number", foreground: "b5cea8" },
+            { token: "operator", foreground: "d4d4d4" },
+            { token: "predefined", foreground: "4ec9b0" },
+            { token: "variable", foreground: "9cdcfe" },
+            { token: "delimiter", foreground: "d4d4d4" },
+            
+            // Токены для разных уровней вложенности (как в JSON)
+            { token: "keyword.jinja.nesting0", foreground: "569cd6", fontStyle: "bold" }, // Уровень 0 - синий
+            { token: "keyword.jinja.nesting1", foreground: "da70d6", fontStyle: "bold" }, // Уровень 1 - фиолетовый
+            { token: "keyword.jinja.nesting2", foreground: "179fff", fontStyle: "bold" }, // Уровень 2 - голубой
+            { token: "keyword.jinja.nesting3", foreground: "ffd700", fontStyle: "bold" }, // Уровень 3 - золотой
+            { token: "keyword.jinja.nesting4", foreground: "ff6b6b", fontStyle: "bold" }, // Уровень 4 - красный
+            { token: "keyword.jinja.nesting5", foreground: "4ec9b0", fontStyle: "bold" }, // Уровень 5 - бирюзовый
+            
+            // Дополнительные токены для JSON (если используются)
+            { token: "json", foreground: 'ffd700' },
+            { token: "json2", foreground: 'da70d6' },
+            { token: "json3", foreground: '179fff' },
         ],
         colors: {},
     });
 
+    // Регистрация кастомного провайдера токенизации с поддержкой вложенности
+    registerNestedTokensProvider(monaco, id);
+    
     // Регистрация провайдеров
     registerCompletionProvider(monaco, id, keywords, filtersAndTests);
     registerFoldingProvider(monaco, id);
     registerHoverProvider(monaco, id, keywords, filtersAndTests);
     registerFormattingProvider(monaco, id);
+}
+
+/**
+ * Регистрация кастомного провайдера токенизации с поддержкой вложенности
+ */
+function registerNestedTokensProvider(monaco, id) {
+    monaco.languages.registerTokensProviderFactory(id, {
+        create: function(model) {
+            return {
+                getInitialState: function() {
+                    return { nestingLevel: 0 };
+                },
+                
+                tokenize: function(line, state) {
+                    const tokens = [];
+                    let currentIndex = 0;
+                    let nestingLevel = state.nestingLevel || 0;
+                    
+                    // Регулярные выражения для различных конструкций Jinja2
+                    const patterns = [
+                        // Комментарии
+                        { regex: /^\s*\{#-?/, token: 'comment.block.jinja', type: 'comment' },
+                        { regex: /-?#\}\s*$/, token: 'comment.block.jinja', type: 'comment_end' },
+                        
+                        // Выражения {{ }}
+                        { regex: /^\s*\{\{-?/, token: 'delimiter.brace-expression.jinja', type: 'expression' },
+                        { regex: /-?\}\}\s*$/, token: 'delimiter.brace-expression.jinja', type: 'expression_end' },
+                        
+                        // Теги {% %}
+                        { regex: /^\s*\{%-?/, token: 'delimiter.brace-statement.jinja', type: 'tag' },
+                        { regex: /-?\%\}\s*$/, token: 'delimiter.brace-statement.jinja', type: 'tag_end' },
+                        
+                        // Ключевые слова блоков
+                        { regex: /\b(if|for|block|macro|filter|call|raw|autoescape|with|trans)\b/, token: 'keyword.jinja', type: 'block_start' },
+                        { regex: /\b(endif|endfor|endblock|endmacro|endfilter|endcall|endraw|endautoescape|endwith|endtrans)\b/, token: 'keyword.jinja', type: 'block_end' },
+                        
+                        // Строки
+                        { regex: /"([^"\\]|\\.)*"/, token: 'string' },
+                        { regex: /'([^'\\]|\\.)*'/, token: 'string' },
+                        { regex: /`([^`\\]|\\.)*`/, token: 'string' },
+                        
+                        // Числа
+                        { regex: /\b\d+\.?\d*([eE][+-]?\d+)?\b/, token: 'number' },
+                        
+                        // Операторы
+                        { regex: /[=><!~?:&|+\-*\/%\^]+/, token: 'operator' },
+                        
+                        // Фильтры
+                        { regex: /\|\s*\w+/, token: 'predefined' },
+                        
+                        // Идентификаторы
+                        { regex: /\b\w+\b/, token: 'variable' },
+                        
+                        // Разделители
+                        { regex: /[\(\)\[\]\{\}\.\,\:\;]/, token: 'delimiter' }
+                    ];
+                    
+                    // Обрабатываем строку по частям
+                    while (currentIndex < line.length) {
+                        let matched = false;
+                        
+                        for (const pattern of patterns) {
+                            const match = line.slice(currentIndex).match(pattern.regex);
+                            if (match) {
+                                const tokenType = pattern.token;
+                                const nestingToken = getNestedToken(tokenType, nestingLevel, pattern.type);
+                                
+                                tokens.push({
+                                    startIndex: currentIndex,
+                                    scopes: nestingToken
+                                });
+                                
+                                // Обновляем уровень вложенности
+                                if (pattern.type === 'block_start') {
+                                    nestingLevel++;
+                                } else if (pattern.type === 'block_end') {
+                                    nestingLevel = Math.max(0, nestingLevel - 1);
+                                }
+                                
+                                currentIndex += match[0].length;
+                                matched = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!matched) {
+                            currentIndex++;
+                        }
+                    }
+                    
+                    // Обновляем состояние
+                    state.nestingLevel = nestingLevel;
+                    
+                    return {
+                        tokens: tokens,
+                        endState: state
+                    };
+                }
+            };
+        }
+    });
+    
+    // Функция для определения токена на основе уровня вложенности
+    function getNestedToken(baseToken, nestingLevel, type) {
+        if (type === 'block_start' || type === 'block_end') {
+            const level = Math.min(nestingLevel, 5); // Ограничиваем до 5 уровней
+            return `${baseToken}.nesting${level}`;
+        }
+        return baseToken;
+    }
 }
 
 /**
@@ -814,11 +956,29 @@ class EditorManager {
             clearTimeout(this.renderTimeout);
         }
         
+        // Показываем индикатор ожидания
+        this.showWaitingIndicator();
         
         // Устанавливаем новый таймер на указанное время
         this.renderTimeout = setTimeout(() => {
+            this.hideWaitingIndicator();
             this.renderTemplate();
         }, CONFIG.RENDER_DELAY);
+    }
+
+    /**
+     * Показать индикатор ожидания рендеринга
+     */
+    showWaitingIndicator() {
+        const delaySeconds = CONFIG.RENDER_DELAY / 1000;
+        this.editors.output.setValue(`// Ожидание рендеринга... (${delaySeconds} сек)`);
+    }
+
+    /**
+     * Скрыть индикатор ожидания
+     */
+    hideWaitingIndicator() {
+        // Индикатор будет заменен результатом рендеринга
     }
 
     async renderTemplate() {

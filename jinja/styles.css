@@ -1,0 +1,196 @@
+/* Основные стили для Jinja2 Renderer */
+
+html,
+body {
+    background: #1e1e1e;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#main {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+#left,
+#right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 2px solid #444;
+}
+
+#top-left-container,
+#bottom-left-container,
+#top-right-container,
+#bottom-right-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid #444;
+}
+
+.editor {
+    flex: 1;
+    width: 100%;
+}
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+}
+
+.editor-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #eee;
+    font-size: 14px;
+    padding: 4px 0px;
+    border-bottom: 1px solid #444;
+    font-family: sans-serif;
+    height: 30px;
+    flex-shrink: 0;
+}
+
+/* Стили для радиокнопок */
+.editor-label label {
+    margin: 0 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.editor-label input[type="radio"] {
+    margin-right: 5px;
+}
+
+/* Стили для элементов управления шаблонами */
+.template-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+    flex-wrap: wrap;
+}
+
+.template-name-input {
+    background: #202020;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 12px;
+    width: 120px;
+    outline: none;
+}
+
+.template-name-input:focus {
+    border-color: #007acc;
+}
+
+.template-button {
+    background: #444;
+    border: 1px solid #666;
+    color: #eee;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+    min-width: 30px;
+}
+
+.template-button:hover {
+    background: #555;
+}
+
+.template-button:active {
+    background: #333;
+}
+
+.template-button.delete:hover {
+    background: #d32f2f;
+}
+
+.template-select {
+    background: #202020;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 150px;
+    outline: none;
+}
+
+.template-select:focus {
+    border-color: #007acc;
+}
+
+/* Стили для кнопки сброса */
+.reset-button {
+    background: #444;
+    border: 1px solid #666;
+    color: #eee;
+    border-radius: 3px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.reset-button:hover {
+    background: #555;
+}
+
+.reset-button:active {
+    background: #333;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    #main {
+        flex-direction: column;
+    }
+    
+    #left,
+    #right {
+        border-right: none;
+        border-bottom: 2px solid #444;
+    }
+    
+    .editor-label {
+        font-size: 12px;
+        padding: 2px 0px;
+    }
+
+    .template-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 3px;
+        margin-left: 5px;
+    }
+
+    .template-name-input {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .template-select {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .template-button {
+        min-width: auto;
+        flex: 1;
+    }
+}

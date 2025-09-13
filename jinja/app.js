@@ -8,7 +8,7 @@ const CONFIG = {
     API_BASE_URL: 'https://far.ddns.me:8000',
     MONACO_VERSION: '0.45.0',
     JS_YAML_VERSION: '4.1.0',
-    RENDER_DELAY: 3000, // Задержка рендеринга в миллисекундах (3 секунды)
+    RENDER_DELAY: 1000, // Задержка рендеринга в миллисекундах
     STORAGE_KEYS: {
         TEMPLATE: 'jinja2_template',
         DATA: 'jinja2_data',
@@ -955,30 +955,10 @@ class EditorManager {
         if (this.renderTimeout) {
             clearTimeout(this.renderTimeout);
         }
-        
-        // Показываем индикатор ожидания
-        this.showWaitingIndicator();
-        
         // Устанавливаем новый таймер на указанное время
         this.renderTimeout = setTimeout(() => {
-            this.hideWaitingIndicator();
             this.renderTemplate();
         }, CONFIG.RENDER_DELAY);
-    }
-
-    /**
-     * Показать индикатор ожидания рендеринга
-     */
-    showWaitingIndicator() {
-        const delaySeconds = CONFIG.RENDER_DELAY / 1000;
-        this.editors.output.setValue(`// Ожидание рендеринга... (${delaySeconds} сек)`);
-    }
-
-    /**
-     * Скрыть индикатор ожидания
-     */
-    hideWaitingIndicator() {
-        // Индикатор будет заменен результатом рендеринга
     }
 
     async renderTemplate() {

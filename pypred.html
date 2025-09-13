@@ -1,210 +1,53 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
-    <title>PyPred</title>
-    <link rel="icon" href="/assets/pypred.png" type="image/png">
-    <style>
-        html,
-        body {
-            background: #1e1e1e;
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #main {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
-
-        #left {
-            flex: 1;
-            /* занимает половину */
-            display: flex;
-            flex-direction: column;
-            border-right: 2px solid #444;
-        }
-
-        #top-left-container,
-        #bottom-left-container {
-            flex: 1;
-            /* каждая половина занимает 50% */
-            display: flex;
-            flex-direction: column;
-            border-bottom: 2px solid #444;
-        }
-
-        #right {
-            flex: 1;
-        }
-
-        #right-container {
-            flex: 1;
-            /* занимает вторую половину */
-            display: flex;
-            flex-direction: column;
-        }
-
-        .editor {
-            flex: 1;
-            width: 100%;
-        }
-
-        .editor-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            width: 100%;
-        }
-
-        .editor-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #eee;
-            font-size: 14px;
-            padding: 4px 8px;
-            border-bottom: 1px solid #444;
-            font-family: sans-serif;
-            height: 24px;
-            flex-shrink: 0;
-
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyPred Evaluator - Онлайн оценка предикатов</title>
+    <meta name="description" content="Веб-приложение для оценки Python-подобных предикатов с JSON данными">
+    <meta name="keywords" content="PyPred, предикаты, Python, JSON, оценка условий">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="./assets/pypred.png" type="image/png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./pypred/styles.css">
+    
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 
 <body>
-    <div id="main">
-        <div id="left">
-            <div id="top-left-container" class="editor-container">
-                <div class="editor-label">PyPred условие</div>
-                <div id="top-left" class="editor"></div>
-            </div>
-            <div id="bottom-left-container" class="editor-container">
-                <div class="editor-label">Входные данные (JSON)</div>
-                <div id="bottom-left" class="editor"></div>
-            </div>
-        </div>
+    <main id="main">
+        <!-- Левая панель -->
+        <section id="left">
+            <!-- Редактор предиката -->
+            <article id="top-left-container" class="editor-container">
+                <header class="editor-label">
+                    <h2>PyPred условие</h2>
+                </header>
+                <div id="top-left" class="editor" role="textbox" aria-label="Редактор PyPred условия"></div>
+            </article>
+            
+            <!-- Редактор входных данных -->
+            <article id="bottom-left-container" class="editor-container">
+                <header class="editor-label">
+                    <h2>Входные данные (JSON)</h2>
+                </header>
+                <div id="bottom-left" class="editor" role="textbox" aria-label="Редактор входных данных JSON"></div>
+            </article>
+        </section>
+        
+        <!-- Правая панель -->
+        <section id="right-container" class="editor-container">
+            <header class="editor-label">
+                <h2>Результат:</h2>
+            </header>
+            <div id="right" class="editor" role="textbox" aria-label="Редактор результата оценки предиката" aria-readonly="true"></div>
+        </section>
+    </main>
 
-        <div id="right-container" class="editor-container">
-            <div class="editor-label">Результат:</div>
-            <div id="right" class="editor"></div>
-        </div>
-    </div>
-
-    <script>
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
-        require(['vs/editor/editor.main'], function (monaco) {
-
-            // Пример содержимого
-            const examplePredicate = `x > 5 and y < 30`;
-
-            exampleJSON = `{\n  "x": 10,\n  "y": 20\n}`
-
-            // ===== Создаём редакторы =====
-            const predicateEditor = monaco.editor.create(document.getElementById('top-left'), {
-                value: examplePredicate,
-                language: 'text',
-                fontSize: 14,
-                wordWrap: "on",
-                glyphMargin: true,
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }
-            });
-
-            const dataEditor = monaco.editor.create(document.getElementById('bottom-left'), {
-                value: exampleJSON,
-                language: 'json',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }
-            });
-
-            const outputEditor = monaco.editor.create(document.getElementById('right'), {
-                value: '',
-                language: 'json',
-                theme: 'vs-dark',
-                fontSize: 14,
-                wordWrap: "on",
-                minimap: { enabled: false },
-                unicodeHighlight: {
-                    ambiguousCharacters: false, // отключает подсветку похожих символов
-                    invisibleCharacters: false, // отключает подсветку невидимых символов
-                    nonBasicASCII: false        // отключает предупреждение для всех не-ASCII
-                }, readOnly: true
-            });
-
-            function getSelectedFormat() {
-                return document.querySelector('input[name="output-format"]:checked').value;
-            }
-
-            // ===== Рендеринг шаблона при изменении =====
-            async function renderPredicate() {
-                const condition = predicateEditor.getValue().replaceAll(/\n|\r/g,' ');
-                console.log(condition)
-                let data = dataEditor.getValue()
-                try {
-                    data = JSON.parse(data);
-                } catch (error) {
-                    outputEditor.setValue("// Ошибка во входных данных:\n" + error.message);
-                    return; // чтобы дальше не выполнялось
-                }
-                
-                const response = await fetch("https://far.ddns.me:8000/predicate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ condition, data })
-                });
-                const result = await response.json();
-
-                if (result.ok) {
-                    outputEditor.setValue(result.result.toString());
-                } else {
-                    outputEditor.setValue("// Ошибка решения\n" + result.errors.map(i => i));
-                }
-            }
-
-
-            predicateEditor.onDidChangeModelContent(renderPredicate);
-            dataEditor.onDidChangeModelContent(renderPredicate);
-            renderPredicate();
-
-            window.addEventListener("resize", () => {
-                predicateEditor.layout();
-                dataEditor.layout();
-                outputEditor.layout();
-            });
-
-            const editors = [
-                { editor: predicateEditor, container: document.getElementById("top-left") },
-                { editor: dataEditor, container: document.getElementById("bottom-left") },
-                { editor: outputEditor, container: document.getElementById("right") }
-            ];
-
-            const resizeObserver = new ResizeObserver(() => {
-                editors.forEach(({ editor }) => editor.layout());
-            });
-
-            editors.forEach(({ container }) => resizeObserver.observe(container));
-        });
-    </script>
+    <!-- Application Script -->
+    <script src="./pypred/app.js"></script>
 </body>
-
 </html>

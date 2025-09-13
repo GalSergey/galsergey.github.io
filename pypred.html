@@ -25,6 +25,16 @@
             <article id="top-left-container" class="editor-container">
                 <header class="editor-label">
                     <h2>PyPred условие</h2>
+                    <div class="template-controls">
+                        <input id="template-name" type="text" placeholder="Имя шаблона" class="template-name-input">
+                        <button id="save-template-btn" class="template-button" title="Сохранить шаблон">💾</button>
+                        <select id="template-select" class="template-select">
+                            <option value="">Выберите шаблон</option>
+                        </select>
+                        <button id="load-template-btn" class="template-button" title="Загрузить шаблон">📂</button>
+                        <button id="delete-template-btn" class="template-button delete" title="Удалить шаблон">🗑️</button>
+                        <button id="reset-btn" class="reset-button" title="Сбросить к примерам">🔄</button>
+                    </div>
                 </header>
                 <div id="top-left" class="editor" role="textbox" aria-label="Редактор PyPred условия"></div>
             </article>
